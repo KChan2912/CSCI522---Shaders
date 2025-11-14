@@ -1,0 +1,79 @@
+#ifndef SampleWorkspace_StdMesh_PS_cgps_h
+#define SampleWorkspace_StdMesh_PS_cgps_h
+
+#include "APIAbstraction.gpu"
+#include "StandardConstants.fx"
+#include "StandardTextureResources.fx"
+#include "samplerhelper.fx"
+#include "lighthelper.fx"
+#include "StdMesh_Structs.fx"
+#include "shadowmaphelper.fx"
+
+
+float4 StdMesh_Shadowed_A_0_PS(STD_MESH_SHADOWED_PS_IN pIn)
+{
+	float4 originalColor = sample2D(gDiffuseMapSampler, pIn.iTexCoord, gDiffuseMap); 
+
+	float4 colorOffset;
+
+	float3 lightVec0 =  gLight0.xyzPos_w.xyz - pIn.iPosW;
+
+	float3 CelLightDirection = float3(2, 2, -1);
+
+	float intensity = dot(normalize(CelLightDirection), pIn.iNormalW);
+    if(intensity < 0)
+        intensity = 0;
+	
+    if (intensity > 0.95)
+        colorOffset = float4(1.0,1.0,1.0,0.0) * originalColor;
+    else if (intensity > 0.5)
+        colorOffset = float4(0.5,0.5,0.5,0.0) * originalColor;
+    else if (intensity > 0.05)
+        colorOffset = float4(0.2,0.2,0.2,0.0) * originalColor;
+    else
+        colorOffset = float4(0.01,0.01,0.01,0.0) * originalColor;
+    
+    float3 normal = normalize(pIn.iNormalW);
+    
+    SurfaceInfo defaultSurface;
+    defaultSurface.pos = pIn.iPosW;
+	defaultSurface.normal =	normal;
+	defaultSurface.diffuse = originalColor;
+	defaultSurface.spec = make_float4(0.5, 0.5, 0.5, 1.0);
+	
+	float shadowFactor = CalcShadowFactor(pIn.iProjTexCoord);
+	
+	//Combine lighting from all lights
+	float4 combinedLighting = make_float4(0.0, 0.0, 0.0, 0.0);
+	
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight0, xyzgEyePosW_wDoMotionBlur.xyz, shadowFactor), 1.0);
+    combinedLighting += make_float4(RenderLight(defaultSurface, gLight1, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight2, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight3, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+
+    /*
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight4, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight5, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight6, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+	combinedLighting += make_float4(RenderLight(defaultSurface, gLight7, xyzgEyePosW_wDoMotionBlur.xyz, 1.0), 1.0);
+    */
+    
+	float4 combinedColor = make_float4((colorOffset) + (float4(0.3,0.3,0.3,0.0) * combinedLighting));
+	
+	/*
+	float4 dcolor = make_float4(0.0, 0.0, 0.0, 1.0);
+	 if (xHasNrm_yHasSpec_zHasGlow_wHasDiff.w)
+     {
+     float4 dcolor = sample(gDiffuseMapSampler, pIn.iTexCoord, gDiffuseMap);
+     clip(dcolor.a - 0.75f);
+     // factor in color
+     combinedColor = combinedLighting * dcolor;
+     }*/
+	combinedColor.a = 0.0;
+	
+	return combinedColor;
+}
+
+PS_wrapper_STD_MESH_SHADOWED(StdMesh_Shadowed_A_0_PS)
+
+#endif

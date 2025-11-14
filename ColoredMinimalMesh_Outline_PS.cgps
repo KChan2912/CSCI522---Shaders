@@ -1,0 +1,146 @@
+#ifndef SampleWorkspace_ColoredMinimalMesh_MotionBlur_PS_cgps_h
+#define SampleWorkspace_ColoredMinimalMesh_MotionBlur_PS_cgps_h
+
+#include "APIAbstraction.gpu"
+#include "StandardConstants.fx"
+#include "StandardTextureResources.fx"
+#include "samplerhelper.fx"
+#include "lighthelper.fx"
+#include "blurhelper.fx"
+#include "ColoredMinimalMesh_Structs.fx"
+
+float linearDepth (float z)
+{
+	
+	//float depth = sample2D(gDepthMapSampler, coord, gDepthMap).r;
+	//float3 ndc = make_float3(coord, depth) * 2.0 - 1.0;
+	//float4 view = mul(make_float4(ndc, 1.0), gView);
+	//view.xyz /= view.w;
+	//float linDep = -view.z;
+	//return linDep;
+
+	float n = 0.05f;
+	float f = 2000.0f;
+    return (2.0 * n) / (f + n - z * (f - n)); 
+}
+//MAKE DEPTH MAPS WORK PLEASE AT SOME POINT
+float4 ColoredMinimalMesh_MotionBlur_PS(COLORED_MINIMAL_MESH_PS_IN pIn)
+{
+	
+	float4 color = sample2D(gDiffuseMapSampler, pIn.iColor.xy, gDiffuseMap);
+
+
+	float3 sample_col = make_float3(color.r * 0.3, color.g * 0.59, color.b * 0.11);
+	float final_col = sample_col.r+sample_col.g+sample_col.b;
+	
+	float4 ncolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(0, 0.001)), gDiffuseMap);
+	float3 sample_ncol = make_float3(ncolor.r * 0.3, ncolor.g * 0.59, ncolor.b * 0.11);
+	float final_ncol = sample_ncol.r+sample_ncol.g+sample_ncol.b;
+
+	float4 scolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(0, -0.001)), gDiffuseMap);
+	float3 sample_scol = make_float3(scolor.r * 0.3, scolor.g * 0.59, scolor.b * 0.11);
+	float final_scol = sample_scol.r+sample_scol.g+sample_scol.b;
+
+	float4 ecolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(0.001, 0)), gDiffuseMap);
+	float3 sample_ecol = make_float3(ecolor.r * 0.3, ecolor.g * 0.59, ecolor.b * 0.11);
+	float final_ecol = sample_ecol.r+sample_ecol.g+sample_ecol.b;
+
+	float4 wcolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(-0.001, 0)), gDiffuseMap);
+	float3 sample_wcol = make_float3(wcolor.r * 0.3, wcolor.g * 0.59, wcolor.b * 0.11);
+	float final_wcol = sample_wcol.r+sample_wcol.g+sample_wcol.b;
+
+	float4 necolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(0.001, 0.001)), gDiffuseMap);
+	float3 sample_necol = make_float3(necolor.r * 0.3, necolor.g * 0.59, necolor.b * 0.11);
+	float final_necol = sample_necol.r+sample_necol.g+sample_necol.b;
+
+	float4 nwcolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(-0.001, 0.001)), gDiffuseMap);
+	float3 sample_nwcol = make_float3(nwcolor.r * 0.3, nwcolor.g * 0.59, nwcolor.b * 0.11);
+	float final_nwcol = sample_nwcol.r+sample_nwcol.g+sample_nwcol.b;
+
+	float4 swcolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(-0.001, -0.001)), gDiffuseMap);
+	float3 sample_swcol = make_float3(swcolor.r * 0.3, swcolor.g * 0.59, swcolor.b * 0.11);
+	float final_swcol = sample_swcol.r+sample_swcol.g+sample_swcol.b;
+
+
+	float4 secolor = sample2D(gDiffuseMapSampler, (pIn.iColor.xy + make_float2(0.001, -0.001)), gDiffuseMap);
+	float3 sample_secol = make_float3(secolor.r * 0.3, secolor.g * 0.59, secolor.b * 0.11);
+	float final_secol = sample_secol.r+sample_secol.g+sample_secol.b;
+
+
+	float3x3 neighCols = {final_nwcol , final_ncol, final_necol,
+									final_wcol , final_col, final_ecol,
+									final_swcol, final_scol, final_secol};
+
+	//float4 depthmap = sample2D(gDepthMapSampler, pIn.iColor.xy, gDepthMap);
+
+	//float depth = sample2D(gDepthMapSampler, pIn.iColor.xy, gDepthMap).r;
+	//depth = linearDepth(depth);
+
+	//float n = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(0, 0.1)), gDepthMap).r;
+	//n = linearDepth(n);
+
+	//float s = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(0, -0.1)), gDepthMap).r;
+	//s = linearDepth(s);
+
+	//float w = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(-0.1, 0)), gDepthMap).r;
+	//w = linearDepth(w);
+
+	//float e = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(0.1, 0)), gDepthMap).r;
+	//e = linearDepth(e);
+
+
+	
+	//float ne = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(0.1, 0.1)), gDepthMap).r;
+	//ne = linearDepth(ne);
+
+	
+	//float nw = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(-0.1, 0.1)), gDepthMap).r;
+	//nw = linearDepth(nw);
+
+
+	
+	//float se = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(0.1, -0.1)), gDepthMap).r;
+	//se = linearDepth(se);
+
+	//float sw = sample2D(gDepthMapSampler, (pIn.iColor.xy + make_float2(-0.1, -0.1)), gDepthMap).r;
+	//sw = linearDepth(sw);
+
+
+	//float3x3 surrounding_pixels = {nw , n, ne,
+									//w , depth, e,
+									//sw, s, se};
+	float3x3 sobel_x = {1.0 , 2.0, 1.0,
+						0.0 , 0.0, 0.0,
+						-1.0,-2.0, -1.0};
+	float3x3 sobel_y = {1.0 , 0.0, -1.0,
+						2.0 , 0.0, -2.0,
+						1.0, 0.0, -1.0};
+
+	//float edge_x = dot(sobel_x[0], surrounding_pixels[0]) + dot(sobel_x[1], surrounding_pixels[1]) + dot(sobel_x[2], surrounding_pixels[2]);
+	//float edge_y = dot(sobel_y[0], surrounding_pixels[0]) + dot(sobel_y[1], surrounding_pixels[1]) + dot(sobel_y[2], surrounding_pixels[2]);
+	//float edge = sqrt(pow(edge_x, 2.0)+pow(edge_y, 2.0));
+
+	float sobcol_x = dot(sobel_x[0], neighCols[0]) + dot(sobel_x[1], neighCols[1]) + dot(sobel_x[2], neighCols[2]);
+	float sobcol_y = dot(sobel_y[0], neighCols[0]) + dot(sobel_y[1], neighCols[1]) + dot(sobel_y[2], neighCols[2]);
+	float sobcol = sqrt(pow(sobcol_x, 2.0)+pow(sobcol_y, 2.0));
+	sobcol = smoothstep(0.4, 0.6, sobcol);
+
+	float edge_threshold = 0.2;
+	float4 edgecolor = make_float4(0,0,0,0);
+	float4 bgcolor = make_float4(1,1,1,0);
+
+	if (sobcol > edge_threshold) {
+		return edgecolor;
+	} else {
+		color = color*1.6;
+
+		
+		return color;
+	}
+	
+
+}
+
+PS_wrapper_COLORED_MINIMAL_MESH(ColoredMinimalMesh_MotionBlur_PS)
+
+#endif

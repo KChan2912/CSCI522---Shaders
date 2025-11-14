@@ -1,0 +1,28 @@
+#ifndef SampleWorkspace_StdMesh_PS_cgps_h
+#define SampleWorkspace_StdMesh_PS_cgps_h
+
+#include "APIAbstraction.gpu"
+#include "StandardConstants.fx"
+#include "StandardTextureResources.fx"
+#include "samplerhelper.fx"
+#include "lighthelper.fx"
+#include "StdMesh_Structs.fx"
+#include "shadowmaphelper.fx"
+
+
+float4 StdMesh_Shadowed_A_0_PS(STD_MESH_SHADOWED_PS_IN pIn)
+{
+    
+   float3 viewDir = normalize(xyzgEyePosW_wDoMotionBlur.xyz - pIn.iPosW);
+   float3 reflectionDir = reflect(-viewDir, pIn.iNormalW);
+   float2 cubeTex = CubeAs2D(reflectionDir, pIn.iTexCoord);
+   float4 cubemapColor =   sample2D(gCubeMapSampler, cubeTex, gCubeMap);
+   cubemapColor.a = 0;
+   
+	
+	return cubemapColor;
+}
+
+PS_wrapper_STD_MESH_SHADOWED(StdMesh_Shadowed_A_0_PS)
+
+#endif
