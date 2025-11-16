@@ -28,3 +28,6 @@ I couldn’t figure out how to multipass render within the engine either, so out
 This is a post process shader (make sure to use it in engine as such). 
 We are just using the Sobel method of detecting an edge, and if an edge is detected, we change the pixel out color to black, or we just keep it as is.
 Additionally, some pre-processing of the SceneTexture could help in this shader working a bit better, but is not present here.
+
+
+https://github.com/user-attachments/assets/74e7223c-4dcf-413c-8b29-44629316e672
